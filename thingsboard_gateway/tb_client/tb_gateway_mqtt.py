@@ -140,6 +140,7 @@ class TBGatewayMqttClient(TBDeviceMqttClient):
             telemetry = [telemetry]
         return self.publish_data({device: telemetry}, GATEWAY_MAIN_TOPIC + "telemetry", quality_of_service, )
 
+    # 发布gateway设备到tb
     def gw_connect_device(self, device_name, device_type):
         info = self._client.publish(topic=GATEWAY_MAIN_TOPIC + "connect", payload=dumps({"device": device_name, "type": device_type}),
                                     qos=self.quality_of_service)

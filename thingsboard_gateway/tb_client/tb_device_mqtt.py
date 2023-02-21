@@ -269,12 +269,14 @@ class TBDeviceMqttClient:
             raise TBQoSException("Quality of service (qos) value must be 0 or 1")
         return TBPublishInfo(self._client.publish(topic, data, qos))
 
+    # 发送遥测数据
     def send_telemetry(self, telemetry, quality_of_service=None):
         quality_of_service = quality_of_service if quality_of_service is not None else self.quality_of_service
         if not isinstance(telemetry, list) and not (isinstance(telemetry, dict) and telemetry.get("ts") is not None):
             telemetry = [telemetry]
         return self.publish_data(telemetry, TELEMETRY_TOPIC, quality_of_service)
 
+    # 发送属性
     def send_attributes(self, attributes, quality_of_service=None):
         quality_of_service = quality_of_service if quality_of_service is not None else self.quality_of_service
         return self.publish_data(attributes, ATTRIBUTES_TOPIC, quality_of_service)
@@ -305,6 +307,7 @@ class TBDeviceMqttClient:
             log.debug("Subscribed to %s with id %i", key, self.__device_max_sub_id)
             return self.__device_max_sub_id
 
+    # 请求属性
     def request_attributes(self, client_keys=None, shared_keys=None, callback=None):
         msg = {}
         if client_keys:

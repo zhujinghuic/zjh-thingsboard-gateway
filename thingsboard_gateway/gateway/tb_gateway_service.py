@@ -186,10 +186,10 @@ class TBGatewayService:
         }
         self.__gateway_rpc_methods = {
             "ping": self.__rpc_ping,
-            "stats": self.__form_statistics,
-            "devices": self.__rpc_devices,
-            "update": self.__rpc_update,
-            "version": self.__rpc_version,
+            "stats": self.__form_statistics,# 统计连接器具体生产，消费等信息
+            "devices": self.__rpc_devices,# 连接设备的rpc消息
+            "update": self.__rpc_update,# 版本更新的rpc请求消息
+            "version": self.__rpc_version,# 版本检查的rpc请求
             "device_renamed": self.__process_renamed_gateway_devices,
             "device_deleted": self.__process_deleted_gateway_devices,
         }
@@ -258,7 +258,7 @@ class TBGatewayService:
         self.__min_pack_send_delay_ms = self.__config['thingsboard'].get('minPackSendDelayMS', 500) / 1000.0
         log.info("Gateway started.")
 
-        # todo.view
+        # 以下死循环执行，时刻检查设备变动到tb，发布topic，调度rpc请求，检查共享属性，统计连接器信息到tb，检查连接器配置信息变动，检查版本
         try:
             gateway_statistic_send = 0
             connectors_configuration_check_time = 0
@@ -266,12 +266,16 @@ class TBGatewayService:
                 cur_time = time() * 1000
                 if not self.tb_client.is_connected() and self.__subscribed_to_rpc_topics:
                     self.__subscribed_to_rpc_topics = False
+                    # 若已与tb建立连接并且还没发布rpc topic 则连接gateway设备到tb
                 if self.tb_client.is_connected() and not self.__subscribed_to_rpc_topics:
                     for device in self.__saved_devices:
+                        # 添加设备到tb
                         self.add_device(device, {"connector": self.__saved_devices[device]["connector"]},
                                         device_type=self.__saved_devices[device]["device_type"])
+                     # 发布需要的topic
                     self.subscribe_to_required_topics()
                     self.__subscribed_to_rpc_topics = True
+                    # rpc call 调度   该参数在subscribe_to_required_topics收集
                 if self.__scheduled_rpc_calls:
                     for rpc_call_index in range(len(self.__scheduled_rpc_calls)):
                         rpc_call = self.__scheduled_rpc_calls[rpc_call_index]
@@ -309,25 +313,31 @@ class TBGatewayService:
                         break
                 if not self.__request_config_after_connect and self.tb_client.is_connected() and not self.tb_client.client.get_subscriptions_in_progress():
                     self.__request_config_after_connect = True
+                    # 检查共享属性
                     self.__check_shared_attributes()
 
+                # 在定时时间内统计
                 if cur_time - gateway_statistic_send > self.__statistics[
                         'statsSendPeriodInSeconds'] * 1000 and self.tb_client.is_connected():
+                    # 连接器统计信息
                     summary_messages = self.__form_statistics()
                     # with self.__lock:
+                    # 发送到tb
                     self.tb_client.client.send_telemetry(summary_messages)
                     gateway_statistic_send = time() * 1000
                     # self.__check_shared_attributes()
 
+                # 检查连接器配置信息变动并更新
                 if cur_time - connectors_configuration_check_time > self.__config["thingsboard"].get(
                         "checkConnectorsConfigurationInSeconds", 60) * 1000:
                     self.check_connector_configuration_updates()
                     connectors_configuration_check_time = time() * 1000
 
+                # 版本更新检查
                 if cur_time - self.__updates_check_time >= self.__updates_check_period_ms:
                     self.__updates_check_time = time() * 1000
                     self.version = self.__updater.get_version()
-
+        # 用户关闭程序
         except KeyboardInterrupt:
             self.__stop_gateway()
         except Exception as e:
@@ -337,6 +347,7 @@ class TBGatewayService:
             log.info("The gateway has been stopped.")
             self.tb_client.stop()
 
+    # 关闭连接器
     def __close_connectors(self):
         for current_connector in self.available_connectors:
             try:
@@ -345,6 +356,7 @@ class TBGatewayService:
             except Exception as e:
                 log.exception(e)
 
+    # 关闭gateway，将所有线程关闭
     def __stop_gateway(self):
         self.stopped = True
         self.__updater.stop()
@@ -372,6 +384,7 @@ class TBGatewayService:
         if self.__remote_configurator is not None:
             self.__remote_configurator.send_current_configuration()
 
+    # 属性解析
     def _attributes_parse(self, content, *args):
         try:
             log.debug("Received data: %s", content)
@@ -392,6 +405,7 @@ class TBGatewayService:
         except Exception as e:
             log.exception(e)
 
+    # 处理属性更新
     def __process_attribute_update(self, content):
         self.__process_remote_logging_update(content.get("RemoteLoggingLevel"))
         self.__process_remote_configuration(content.get("configuration"))
@@ -400,6 +414,7 @@ class TBGatewayService:
         self.__process_remote_logging_update(shared_attributes.get('RemoteLoggingLevel'))
         self.__process_remote_configuration(shared_attributes.get("configuration"))
 
+    # 处理远程日志更新
     def __process_remote_logging_update(self, remote_logging_level):
         if remote_logging_level == 'NONE':
             self.remote_handler.deactivate()
@@ -457,9 +472,13 @@ class TBGatewayService:
     def subscribe_to_required_topics(self):
         # 先清空topic
         self.tb_client.client.clean_device_sub_dict()
+        # gateway-rpc请求处理器
         self.tb_client.client.gw_set_server_side_rpc_request_handler(self._rpc_request_handler)
+        # 服务端-rpc请求处理器
         self.tb_client.client.set_server_side_rpc_request_handler(self._rpc_request_handler)
+        # 发布所有属性
         self.tb_client.client.subscribe_to_all_attributes(self._attribute_update_callback)
+        # gateway发布所有属性
         self.tb_client.client.gw_subscribe_to_all_attributes(self._attribute_update_callback)
 
     def request_device_attributes(self, device_name, shared_keys, client_keys, callback):
@@ -468,6 +487,7 @@ class TBGatewayService:
         if shared_keys is not None:
             self.tb_client.client.gw_request_shared_attributes(device_name, shared_keys, callback)
 
+    # 检查共享属性
     def __check_shared_attributes(self):
         self.tb_client.client.request_attributes(callback=self._attributes_parse)
     def __register_connector(self, session_id, connector_key):
@@ -590,6 +610,7 @@ class TBGatewayService:
             self.__init_remote_configuration(force=True)
             log.info("Remote configuration is enabled forcibly!")
 
+    # 连接连接器
     def _connect_with_connectors(self):
         for connector_type in self.connectors_configs:
             for connector_config in self.connectors_configs[connector_type]:
@@ -1100,6 +1121,7 @@ class TBGatewayService:
         else:
             self._attributes_parse(content)
 
+    # 统计各个连接器的消费，生产，事件
     def __form_statistics(self):
         summary_messages = {"eventsProduced": 0, "eventsSent": 0}
         telemetry = {}
@@ -1125,9 +1147,11 @@ class TBGatewayService:
         else:
             return Status.FAILURE
 
+    # 添加设备到tb
     def add_device(self, device_name, content, device_type=None):
         if device_name not in self.__saved_devices:
             device_type = device_type if device_type is not None else 'default'
+            # **content 是把content解包后合并到新的字典中
             self.__connected_devices[device_name] = {**content, "device_type": device_type}
             self.__saved_devices[device_name] = {**content, "device_type": device_type}
             self.__save_persistent_devices()
@@ -1230,6 +1254,7 @@ class TBGatewayService:
             log.debug("No device found in connected device file.")
             self.__connected_devices = {} if self.__connected_devices is None else self.__connected_devices
 
+    # 保存持久化设备到文件系统
     def __save_persistent_devices(self):
         with self.__lock:
             data_to_save = {}
