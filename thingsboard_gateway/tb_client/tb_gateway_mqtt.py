@@ -36,8 +36,8 @@ class TBGatewayMqttClient(TBDeviceMqttClient):
         super().__init__(host, port, username, password, quality_of_service, client_id)
         self.quality_of_service = quality_of_service
         self.__max_sub_id = 0
-        self.__sub_dict = {}
-        self.__connected_devices = set("*")
+        self.__sub_dict = {} # 订阅的topic
+        self.__connected_devices = set("*") # 连接设备
         self.devices_server_side_rpc_request_handler = None
         self._client.on_connect = self._on_connect
         self._client.on_message = self._on_message
@@ -45,6 +45,7 @@ class TBGatewayMqttClient(TBDeviceMqttClient):
         self._client._on_unsubscribe = self._on_unsubscribe
         self._gw_subscriptions = {}
         self.gateway = gateway
+
 
     def _on_connect(self, client, userdata, flags, result_code, *extra_params):
         super()._on_connect(client, userdata, flags, result_code, *extra_params)

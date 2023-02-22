@@ -25,12 +25,12 @@ log = logging.getLogger("tb_connection")
 CHECK_CERT_PERIOD = 86400
 CERTIFICATE_DAYS_LEFT = 3
 
-
+# tb线程类
 class TBClient(threading.Thread):
     def __init__(self, config, config_folder_path):
         super().__init__()
         self.setName('Connection thread.')
-        self.daemon = True
+        self.daemon = True # tbclient是一个守护线程，随主线程关闭一起关闭
         self.__config_folder_path = config_folder_path
         self.__config = config
         self.__host = config["host"]
@@ -48,7 +48,8 @@ class TBClient(threading.Thread):
         self.__is_connected = False
         self.__stopped = False
         self.__paused = False
-        self._last_cert_check_time = 0
+        self._last_cert_check_time = 0 # 最后检查证书时间
+        # 认证连接
         if credentials.get("accessToken") is not None:
             self.__username = str(credentials["accessToken"])
         if credentials.get("username") is not None:
@@ -57,6 +58,7 @@ class TBClient(threading.Thread):
             self.__password = str(credentials["password"])
         if credentials.get("clientId") is not None:
             self.__client_id = str(credentials["clientId"])
+            # 开启连接线程
         self.client = TBGatewayMqttClient(self.__host, self.__port, self.__username, self.__password, self, quality_of_service=self.__default_quality_of_service, client_id=self.__client_id)
         if self.__tls:
             self.__ca_cert = self.__config_folder_path + credentials.get("caCert") if credentials.get("caCert") is not None else None
@@ -64,10 +66,12 @@ class TBClient(threading.Thread):
             self.__cert = self.__config_folder_path + credentials.get("cert") if credentials.get("cert") is not None else None
 
             # check certificates for end date
+            # 定时检查证书时效
             self._check_cert_thread = threading.Thread(name='Check Certificates Thread',
                                                        target=self._check_certificates, daemon=True)
             self._check_cert_thread.start()
 
+            # mqtt连接证书设置
             self.client._client.tls_set(ca_certs=self.__ca_cert,
                                         certfile=self.__cert,
                                         keyfile=self.__private_key,
@@ -89,11 +93,13 @@ class TBClient(threading.Thread):
     #     else:
     #         log.debug(args)
 
+    # 检查连接证书
     def _check_certificates(self):
         while not self.__stopped and not self.__paused:
             if time() - self._last_cert_check_time >= CHECK_CERT_PERIOD:
                 if self.__cert:
                     log.info('Will generate new certificate')
+                    # 检查证书并获得证书
                     new_cert = TBUtility.check_certificate(self.__cert, key=self.__private_key,
                                                            days_left=CERTIFICATE_DAYS_LEFT)
 
@@ -103,7 +109,7 @@ class TBClient(threading.Thread):
                 if self.__ca_cert:
                     is_outdated = TBUtility.check_certificate(self.__ca_cert, generate_new=False,
                                                               days_left=CERTIFICATE_DAYS_LEFT)
-
+                    # 证书快过期则发送属性消息到tb
                     if is_outdated:
                         self.client.send_attributes({'CACertificate': 'CA certificate will outdated soon'})
 
@@ -120,6 +126,7 @@ class TBClient(threading.Thread):
     def is_connected(self):
         return self.__is_connected
 
+    # 连接到tb
     def _on_connect(self, client, userdata, flags, result_code, *extra_params):
         log.debug('TB client %s connected to ThingsBoard', str(client))
         if result_code == 0:
@@ -147,6 +154,7 @@ class TBClient(threading.Thread):
         self.unsubscribe('*')
         self.client.disconnect()
 
+    # 取消订阅
     def unsubscribe(self, subsription_id):
         self.client.gw_unsubscribe(subsription_id)
         self.client.unsubscribe_from_attribute(subsription_id)

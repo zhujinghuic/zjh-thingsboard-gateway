@@ -200,6 +200,7 @@ class TBUtility:
 
         return cert
 
+    # 检查证书时效，generate_new 当过期时是否生成新证书
     @staticmethod
     def check_certificate(certificate, key=None, generate_new=True, days_left=3):
         cert_detail = x509.load_pem_x509_certificate(open(certificate, 'rb').read())

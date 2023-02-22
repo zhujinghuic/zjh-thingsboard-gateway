@@ -9,11 +9,11 @@ import simplejson
 # 统计服务类
 class StatisticsService(Thread):
     DATA_STREAMS_STATISTICS = {
-        'receivedBytesFromDevices': 0,
-        'convertedBytesFromDevice': 0,
-        'allReceivedBytesFromTB': 0,
-        'allBytesSentToTB': 0,
-        'allBytesSentToDevices': 0,
+        'receivedBytesFromDevices': 0,# 所有接收设备的字节数
+        'convertedBytesFromDevice': 0,# 所有转换设备的字节数
+        'allReceivedBytesFromTB': 0,# 所有接收到tb的字节数
+        'allBytesSentToTB': 0,# 所有发送到tb的字节数
+        'allBytesSentToDevices': 0, # 所有发送到设备的字节数
     }
 
     def __init__(self, stats_send_period_in_seconds, gateway, log, config_path=None):

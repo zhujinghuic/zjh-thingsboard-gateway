@@ -41,6 +41,7 @@ class TBQoSException(Exception):
     pass
 
 
+# TB发布消息和消息标识类
 class TBPublishInfo:
     TB_ERR_AGAIN = -1
     TB_ERR_SUCCESS = 0
@@ -74,7 +75,7 @@ class TBPublishInfo:
         self.message_info.wait_for_publish()
         return self.message_info.rc
 
-
+# 连接到tbmqtt 基类
 class TBDeviceMqttClient:
     def __init__(self, host, port=1883, username=None, password=None, quality_of_service=None, client_id=""):
         self._client = paho.Client(protocol=4, client_id=client_id)
@@ -123,13 +124,14 @@ class TBDeviceMqttClient:
         log.debug("Disconnected client: %s, user data: %s, result code: %s", str(client), str(userdata), str(result_code))
         log.setLevel(prev_level)
 
+    # 连接
     def _on_connect(self, client, userdata, flags, result_code, *extra_params):
         result_codes = {
-            1: "incorrect protocol version",
-            2: "invalid client identifier",
-            3: "server unavailable",
-            4: "bad username or password",
-            5: "not authorised",
+            1: "incorrect protocol version",# “协议版本不正确”
+            2: "invalid client identifier",# “客户端标识符无效”
+            3: "server unavailable",# “服务器不可用”
+            4: "bad username or password",# “用户名或密码错误”
+            5: "not authorised",# “未授权”
             }
         if self.__connect_callback:
             sleep(.2)
@@ -137,6 +139,7 @@ class TBDeviceMqttClient:
         if result_code == 0:
             self.__is_connected = True
             log.info("connection SUCCESS")
+            #
             self._client.subscribe(ATTRIBUTES_TOPIC, qos=self.quality_of_service)
             self._client.subscribe(ATTRIBUTES_TOPIC + "/response/+", qos=self.quality_of_service)
             self._client.subscribe(RPC_REQUEST_TOPIC + '+', qos=self.quality_of_service)

@@ -472,7 +472,7 @@ class TBGatewayService:
     def subscribe_to_required_topics(self):
         # 先清空topic
         self.tb_client.client.clean_device_sub_dict()
-        # gateway-rpc请求处理器
+        # gateway 到 tb rpc请求处理器
         self.tb_client.client.gw_set_server_side_rpc_request_handler(self._rpc_request_handler)
         # 服务端-rpc请求处理器
         self.tb_client.client.set_server_side_rpc_request_handler(self._rpc_request_handler)
@@ -1195,6 +1195,7 @@ class TBGatewayService:
                 # .2相当于0.2
                 sleep(.2)
 
+    # 加载连接器持久化keys
     def __load_persistent_connector_keys(self):
         persistent_keys = {}
         if PERSISTENT_GRPC_CONNECTORS_KEY_FILENAME in listdir(self._config_dir) and \
@@ -1208,6 +1209,7 @@ class TBGatewayService:
             log.debug("Persistent keys file not found")
         return persistent_keys
 
+    # 持久化连接器key到文件系统
     def __save_persistent_keys(self, persistent_keys):
         try:
             with open(self._config_dir + PERSISTENT_GRPC_CONNECTORS_KEY_FILENAME, 'w') as persistent_keys_file:
