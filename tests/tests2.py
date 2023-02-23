@@ -35,8 +35,4 @@ if __name__ == '__main__':
         'a': 2,
         'b': 3
     }
-    b = ('a', 4)
-    print(a.items())
-    new_rpc_request_in_progress = {key: value for key, value in
-                                   a.items() if value != 2}
-    print(new_rpc_request_in_progress)
+    print(a.get('a'))

@@ -1121,7 +1121,7 @@ class TBGatewayService:
         else:
             self._attributes_parse(content)
 
-    # 统计各个连接器的消费，生产，事件
+    # 统计各个连接器的消费，生产，事件（遥测事件）
     def __form_statistics(self):
         summary_messages = {"eventsProduced": 0, "eventsSent": 0}
         telemetry = {}

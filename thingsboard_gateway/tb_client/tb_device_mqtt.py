@@ -180,10 +180,12 @@ class TBDeviceMqttClient:
     def stop(self):
         self.stopped = True
 
+    # 解码消息后判断属于哪个topic的消息再执行函数事件处理
     def _on_message(self, client, userdata, message):
         content = TBUtility.decode(message)
         self._on_decoded_message(content, message)
 
+    # 解码消息 属于哪个topic，并执行回调或订阅请求
     def _on_decoded_message(self, content, message):
         if message.topic.startswith(RPC_REQUEST_TOPIC):
             request_id = message.topic[len(RPC_REQUEST_TOPIC):len(message.topic)]
@@ -229,11 +231,13 @@ class TBDeviceMqttClient:
         Defaults to 20. Increasing this value will consume more memory but can increase throughput."""
         self._client.max_inflight_messages_set(inflight)
 
+    """设置传出消息队列中可挂起的QoS>0的传出消息的最大数量。默认值为0。0表示无限制。当队列已满时，任何其他传出消息都将被丢弃。"""
     def max_queued_messages_set(self, queue_size):
         """Set the maximum number of outgoing messages with QoS>0 that can be pending in the outgoing message queue.
         Defaults to 0. 0 means unlimited. When the queue is full, any further outgoing messages would be dropped."""
         self._client.max_queued_messages_set(queue_size)
 
+    # 重连tb等待事件设置
     def reconnect_delay_set(self, min_delay=1, max_delay=120):
         """The client will automatically retry connection. Between each attempt it will wait a number of seconds
          between min_delay and max_delay. When the connection is lost, initially the reconnection attempt is delayed
@@ -241,6 +245,7 @@ class TBDeviceMqttClient:
           when the connection complete (e.g. the CONNACK is received, not just the TCP connection is established)."""
         self._client.reconnect_delay_set(min_delay, max_delay)
 
+    # 发送rpc回复
     def send_rpc_reply(self, req_id, resp, quality_of_service=None, wait_for_publish=False):
         quality_of_service = quality_of_service if quality_of_service is not None else self.quality_of_service
         if quality_of_service not in (0, 1):
@@ -250,6 +255,7 @@ class TBDeviceMqttClient:
         if wait_for_publish:
             info.wait_for_publish()
 
+    # 发送rpc请求到tb
     def send_rpc_call(self, method, params, callback):
         with self._lock:
             self.__device_client_rpc_number += 1
@@ -263,6 +269,7 @@ class TBDeviceMqttClient:
     def set_server_side_rpc_request_handler(self, handler):
         self.__device_on_server_side_rpc_response = handler
 
+    # 发布数据到tb
     def publish_data(self, data, topic, qos):
         data = dumps(data)
         if qos is None:
@@ -284,6 +291,7 @@ class TBDeviceMqttClient:
         quality_of_service = quality_of_service if quality_of_service is not None else self.quality_of_service
         return self.publish_data(attributes, ATTRIBUTES_TOPIC, quality_of_service)
 
+    # 根据订阅id取消订阅某个设备属性
     def unsubscribe_from_attribute(self, subscription_id):
         with self._lock:
             for attribute in self.__device_sub_dict:
@@ -294,12 +302,15 @@ class TBDeviceMqttClient:
                 self.__device_sub_dict = {}
             self.__device_sub_dict = dict((k, v) for k, v in self.__device_sub_dict.items() if v)
 
+    # 清空设备订阅信息
     def clean_device_sub_dict(self):
         self.__device_sub_dict = {}
 
+    # 订阅所有属性
     def subscribe_to_all_attributes(self, callback):
         return self.subscribe_to_attribute("*", callback)
 
+    # 订阅属性
     def subscribe_to_attribute(self, key, callback):
         with self._lock:
             self.__device_max_sub_id += 1

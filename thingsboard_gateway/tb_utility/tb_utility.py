@@ -27,6 +27,7 @@ log = getLogger("service")
 
 class TBUtility:
 
+    # 解码消息，字节或其他消息类型转python对象
     @staticmethod
     def decode(message):
         try:
