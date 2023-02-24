@@ -4,6 +4,7 @@ from os import path
 from os.path import exists, splitext
 from re import IGNORECASE, compile
 
+""" 给远程配置交互式命令行用户界面 """
 from PyInquirer import Token, prompt, style_from_dict
 from prompt_toolkit.validation import ValidationError, Validator
 from pyfiglet import Figlet

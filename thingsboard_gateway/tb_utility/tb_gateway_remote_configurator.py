@@ -50,6 +50,7 @@ class RemoteConfigurator:
         self.__new_event_storage = None
         self.in_process = False
 
+    # 处理配置
     def process_configuration(self, configuration):
         try:
             if not self.in_process:
@@ -107,6 +108,7 @@ class RemoteConfigurator:
         except Exception as e:
             LOG.exception(e)
 
+    # 处理远程连接配置
     def __process_connectors_configuration(self):
         LOG.info("Processing remote connectors configuration...")
         if self.__apply_new_connectors_configuration():
@@ -263,15 +265,17 @@ class RemoteConfigurator:
         except Exception as e:
             LOG.exception(e)
 
+    # 读取日志配置并更新handler里
     def __update_logs_configuration(self):
         global LOG
         try:
             LOG = getLogger('service')
             logs_conf_file_path = self.__gateway.get_config_path() + 'logs.conf'
+            # re模块 findall 正则表达式
             new_logging_level = findall(r'level=(.*)', self.__new_logs_configuration.replace("NONE", "NOTSET"))[-1]
             new_logging_config = self.__new_logs_configuration.replace("NONE", "NOTSET").replace("\r\n", linesep)
-            logs_config = ConfigParser(allow_no_value=True)
-            logs_config.read_string(new_logging_config)
+            logs_config = ConfigParser(allow_no_value=True) # 配置文件解析
+            logs_config.read_string(new_logging_config)# 解析new_logging_config配置文件(init文件等)
             for section in logs_config:
                 if "handler_" in section and section != "handler_consoleHandler":
                     args = tuple(logs_config[section]["args"]
@@ -290,6 +294,7 @@ class RemoteConfigurator:
             self.__gateway.remote_handler = TBLoggerHandler(self.__gateway)
             self.__gateway.main_handler.setLevel(new_logging_level)
             self.__gateway.main_handler.setTarget(self.__gateway.remote_handler)
+            # 没有设置日志级别则关闭日志处理器
             if new_logging_level == "NOTSET":
                 self.__gateway.remote_handler.deactivate()
             else:

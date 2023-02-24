@@ -54,6 +54,7 @@ except ImportError:
     print("Cannot load GRPC connector!")
 
 log = logging.getLogger('service')
+# 日志输出到内存中的指定buffer
 main_handler = logging.handlers.MemoryHandler(-1)
 
 DEFAULT_CONNECTORS = {
@@ -407,7 +408,9 @@ class TBGatewayService:
 
     # 处理属性更新
     def __process_attribute_update(self, content):
+        # 处理远程日志更新
         self.__process_remote_logging_update(content.get("RemoteLoggingLevel"))
+        # 处理远程配置更新
         self.__process_remote_configuration(content.get("configuration"))
 
     def __process_attributes_response(self, shared_attributes, client_attributes):
@@ -458,6 +461,7 @@ class TBGatewayService:
         else:
             log.debug("Received renamed device notification %r, but device renaming handle is disabled", renamed_device)
 
+        # 处理远程配置更新
     def __process_remote_configuration(self, new_configuration):
         if new_configuration is not None and self.__remote_configurator is not None:
             try:
@@ -481,6 +485,7 @@ class TBGatewayService:
         # gateway发布所有属性
         self.tb_client.client.gw_subscribe_to_all_attributes(self._attribute_update_callback)
 
+    # 请求设备属性，客户端属性或共享属性
     def request_device_attributes(self, device_name, shared_keys, client_keys, callback):
         if client_keys is not None:
             self.tb_client.client.gw_request_client_attributes(device_name, client_keys, callback)

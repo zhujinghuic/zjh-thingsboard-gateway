@@ -43,4 +43,7 @@ class C(B):
 
 
 if __name__ == '__main__':
+    a = 'a'
+    b = 'ab'
+    print(a in b)
     print(C.doit())

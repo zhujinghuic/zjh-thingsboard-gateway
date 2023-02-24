@@ -58,6 +58,7 @@ class TBLoggerHandler(logging.Handler):
             record = self.formatter.format(record)
             self.__gateway.send_to_storage(self.__gateway.name, {"deviceName": self.__gateway.name, "telemetry": [{"ts": int(time()*1000), "values":{'LOGS': record}}]})
 
+    # 关闭日志处理器
     def deactivate(self):
         self.activated = False
 

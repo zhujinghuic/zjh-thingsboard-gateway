@@ -164,6 +164,7 @@ class TBClient(threading.Thread):
         self.__stopped = False
         self.__min_reconnect_delay = min_reconnect_delay
 
+    # todo.view1
     def run(self):
         keep_alive = self.__config.get("keep_alive", 120)
         try:
