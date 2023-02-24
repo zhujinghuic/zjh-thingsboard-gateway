@@ -135,9 +135,9 @@ class MqttConnector(Connector, Thread):
         self.daemon = True
 
         self.__msg_queue = Queue()
-        self.__workers_thread_pool = []
-        self.__max_msg_number_for_worker = config.get('maxMessageNumberPerWorker', 10)
-        self.__max_number_of_workers = config.get('maxNumberOfWorkers', 100)
+        self.__workers_thread_pool = []# 工作线程池
+        self.__max_msg_number_for_worker = config.get('maxMessageNumberPerWorker', 10) # 工作线程池最大消息处理线程数
+        self.__max_number_of_workers = config.get('maxNumberOfWorkers', 100)# 工作线程池最大线程数
 
         self._on_message_queue = Queue()
         self._on_message_thread = Thread(name='On Message', target=self._process_on_message, daemon=True)
@@ -225,6 +225,7 @@ class MqttConnector(Connector, Thread):
     def get_name(self):
         return self.name
 
+    # 订阅
     def __subscribe(self, topic, qos):
         message = self._client.subscribe(topic, qos)
         try:
@@ -262,10 +263,12 @@ class MqttConnector(Connector, Thread):
                 try:
                     # Load converter for this mapping entry ------------------------------------------------------------
                     # mappings are guaranteed to have topicFilter and converter fields. See __init__
+                    # mqtt消息默认转换器
                     default_converter_class_name = "JsonMqttUplinkConverter"
                     # Get converter class from "extension" parameter or default converter
                     converter_class_name = mapping["converter"].get("extension", default_converter_class_name)
                     # Find and load required class
+                    # 加载转换器模块
                     module = TBModuleLoader.import_module(self._connector_type, converter_class_name)
                     if module:
                         self.__log.debug('Converter %s for topic %s - found!', converter_class_name,
@@ -346,6 +349,8 @@ class MqttConnector(Connector, Thread):
         if self.__subscribes_sent.get(mid) is not None:
             del self.__subscribes_sent[mid]
 
+    # 将消息放置到队列等待转换
+    # -> bool 是函数返回值的建议布尔值类型，当然可以返回其他类型，但是这样做违反规范
     def put_data_to_convert(self, converter, message, content) -> bool:
         if not self.__msg_queue.full():
             self.__msg_queue.put((converter.convert, message.topic, content), True, 100)
@@ -359,10 +364,13 @@ class MqttConnector(Connector, Thread):
 
     def __threads_manager(self):
         if len(self.__workers_thread_pool) == 0:
+            # 执行连接器转换工作，从队列中取出消息保存到存储介质里
             worker = MqttConnector.ConverterWorker("Main", self.__msg_queue, self._save_converted_msg)
+            # 放置到线程池中
             self.__workers_thread_pool.append(worker)
             worker.start()
 
+        # 处理伸缩线程池里面的线程数
         number_of_needed_threads = round(self.__msg_queue.qsize() / self.__max_msg_number_for_worker, 0)
         threads_count = len(self.__workers_thread_pool)
         if number_of_needed_threads > threads_count < self.__max_number_of_workers:
@@ -732,13 +740,14 @@ class MqttConnector(Connector, Thread):
         log.info("RPC canceled or terminated. Unsubscribing from %s", topic)
         self._client.unsubscribe(topic)
 
+    # 转换工作线程
     class ConverterWorker(Thread):
         def __init__(self, name, incoming_queue, send_result):
             super().__init__()
             self.stopped = False
             self.setName(name)
             self.setDaemon(True)
-            self.__msg_queue = incoming_queue
+            self.__msg_queue = incoming_queue# 转换消息队列
             self.in_progress = False
             self.__send_result = send_result
 
@@ -746,6 +755,7 @@ class MqttConnector(Connector, Thread):
             while not self.stopped:
                 if not self.__msg_queue.empty():
                     self.in_progress = True
+                    # 从队列取出元组进行解包，再执行convert_function
                     convert_function, config, incoming_data = self.__msg_queue.get(True, 100)
                     converted_data = convert_function(config, incoming_data)
                     log.debug(converted_data)
