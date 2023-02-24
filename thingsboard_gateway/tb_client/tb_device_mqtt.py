@@ -139,7 +139,7 @@ class TBDeviceMqttClient:
         if result_code == 0:
             self.__is_connected = True
             log.info("connection SUCCESS")
-            #
+            # 订阅属性和prc相应的topic
             self._client.subscribe(ATTRIBUTES_TOPIC, qos=self.quality_of_service)
             self._client.subscribe(ATTRIBUTES_TOPIC + "/response/+", qos=self.quality_of_service)
             self._client.subscribe(RPC_REQUEST_TOPIC + '+', qos=self.quality_of_service)
@@ -350,6 +350,7 @@ class TBDeviceMqttClient:
     def _add_timeout(self, attr_request_number, timestamp):
         self.__timeout_queue.put({"ts": timestamp, "attribute_request_id": attr_request_number})
 
+    # 添加属性请求回调方法
     def _add_attr_request_callback(self, callback):
         with self._lock:
             self.__attr_request_number += 1
@@ -375,6 +376,7 @@ class TBDeviceMqttClient:
                         elif item.get("rpc_request_id"):
                             if self.__device_client_rpc_dict.get(item["rpc_request_id"]):
                                 callback = self.__device_client_rpc_dict.pop(item["rpc_request_id"])
+                    # 执行属性请求回调
                     if callback is not None:
                         if isinstance(callback, tuple):
                             callback[0](None, TBTimeoutException("Timeout while waiting for a reply from ThingsBoard!"), callback[1])

@@ -31,6 +31,7 @@ GATEWAY_CLAIMING_TOPIC = "v1/gateway/claim"
 log = logging.getLogger("tb_connection")
 
 
+# gateway mqtt 连接到 tb
 class TBGatewayMqttClient(TBDeviceMqttClient):
     def __init__(self, host, port, username=None, password=None, gateway=None, quality_of_service=1, client_id=""):
         super().__init__(host, port, username, password, quality_of_service, client_id)
@@ -50,6 +51,7 @@ class TBGatewayMqttClient(TBDeviceMqttClient):
     def _on_connect(self, client, userdata, flags, result_code, *extra_params):
         super()._on_connect(client, userdata, flags, result_code, *extra_params)
         if result_code == 0:
+            # 订阅gateway相应的的topic
             self._gw_subscriptions[int(self._client.subscribe(GATEWAY_ATTRIBUTES_TOPIC, qos=1)[1])] = GATEWAY_ATTRIBUTES_TOPIC
             self._gw_subscriptions[int(self._client.subscribe(GATEWAY_ATTRIBUTES_RESPONSE_TOPIC, qos=1)[1])] = GATEWAY_ATTRIBUTES_RESPONSE_TOPIC
             self._gw_subscriptions[int(self._client.subscribe(GATEWAY_RPC_TOPIC, qos=1)[1])] = GATEWAY_RPC_TOPIC
@@ -71,11 +73,13 @@ class TBGatewayMqttClient(TBDeviceMqttClient):
     def get_subscriptions_in_progress(self):
         return True if self._gw_subscriptions else False
 
+    # 解码消息后判断属于哪个topic的消息再执行函数事件处理
     def _on_message(self, client, userdata, message):
         content = TBUtility.decode(message)
         super()._on_decoded_message(content, message)
         self._on_decoded_message(content, message)
 
+    # 解码消息 属于哪个topic，并执行回调或订阅请求
     def _on_decoded_message(self, content, message):
         if message.topic.startswith(GATEWAY_ATTRIBUTES_RESPONSE_TOPIC):
             with self._lock:
@@ -112,30 +116,38 @@ class TBGatewayMqttClient(TBDeviceMqttClient):
             if self.devices_server_side_rpc_request_handler:
                 self.devices_server_side_rpc_request_handler(self, content)
 
+    # 向tb请求属性
     def __request_attributes(self, device, keys, callback, type_is_client=False):
         if not keys:
             log.error("There are no keys to request")
             return False
 
         ts_in_millis = int(round(time.time() * 1000))
+        # 添加属性请求回调并返回属性请求序号
         attr_request_number = self._add_attr_request_callback(callback)
         msg = {"keys": keys,
                "device": device,
                "client": type_is_client,
                "id": attr_request_number}
+        # 发布到tb
         info = self._client.publish(GATEWAY_ATTRIBUTES_REQUEST_TOPIC, dumps(msg), 1)
+        # 检查回调是否超时
         self._add_timeout(attr_request_number, ts_in_millis + 30000)
         return info
 
+    # 请求共享属性
     def gw_request_shared_attributes(self, device_name, keys, callback):
         return self.__request_attributes(device_name, keys, callback, False)
 
+    # 请求客户端属性
     def gw_request_client_attributes(self, device_name, keys, callback):
         return self.__request_attributes(device_name, keys, callback, True)
 
+    # 发送属性
     def gw_send_attributes(self, device, attributes, quality_of_service=1):
         return self.publish_data({device: attributes}, GATEWAY_MAIN_TOPIC + "attributes", quality_of_service)
 
+    # 发送遥测消息
     def gw_send_telemetry(self, device, telemetry, quality_of_service=1):
         if not isinstance(telemetry, list) and not (isinstance(telemetry, dict) and telemetry.get("ts") is not None):
             telemetry = [telemetry]
@@ -151,9 +163,12 @@ class TBGatewayMqttClient(TBDeviceMqttClient):
         log.debug("Connected device %s", device_name)
         return info
 
+    # gateway 向tb发布断联某个设备
     def gw_disconnect_device(self, device_name):
+        # 向tb发布断联消息，tb处理断连
         info = self._client.publish(topic=GATEWAY_MAIN_TOPIC + "disconnect", payload=dumps({"device": device_name}),
                                     qos=self.quality_of_service)
+        # gateway移除设备
         if device_name in self.__connected_devices:
             self.__connected_devices.remove(device_name)
         # if self.gateway:
@@ -167,6 +182,7 @@ class TBGatewayMqttClient(TBDeviceMqttClient):
     def gw_subscribe_to_all_device_attributes(self, device, callback):
         return self.gw_subscribe_to_attribute(device, "*", callback)
 
+    # 订阅设备属性
     def gw_subscribe_to_attribute(self, device, attribute, callback):
         if device not in self.__connected_devices:
             log.error("Device %s is not connected", device)
@@ -175,12 +191,14 @@ class TBGatewayMqttClient(TBDeviceMqttClient):
             self.__max_sub_id += 1
             key = device + "|" + attribute
             if key not in self.__sub_dict:
+                # 订阅字典- key对应设备，设备对应一个回调方法
                 self.__sub_dict.update({key: {device: callback}})
             else:
                 self.__sub_dict[key].update({device: callback})
             log.info("Subscribed to %s with id %i for device %s", key, self.__max_sub_id, device)
             return self.__max_sub_id
 
+    # 取消订阅
     def gw_unsubscribe(self, subscription_id):
         with self._lock:
             for attribute in self.__sub_dict:

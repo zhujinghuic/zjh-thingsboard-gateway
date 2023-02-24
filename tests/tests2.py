@@ -28,11 +28,19 @@ def f1():
     print("延时之后我才开始执行")
 
 
+class A:
+    def doit(self):
+        print("A")
+
+class B(A):
+    def doit(self):
+        print("B")
+
+class C(B):
+    def doit(self):
+        super().doit()
+
 
 
 if __name__ == '__main__':
-    a = {
-        'a': 2,
-        'b': 3
-    }
-    print(a.get('a'))
+    print(C.doit())
