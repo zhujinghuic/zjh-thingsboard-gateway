@@ -88,6 +88,7 @@ class RemoteConfigurator:
             self.in_process = False
             LOG.exception(e)
 
+    # 发送当前配置到tb （attributes）
     def send_current_configuration(self):
         try:
             current_configuration = {}
@@ -206,6 +207,7 @@ class RemoteConfigurator:
         except Exception as e:
             LOG.exception(e)
 
+    # 安全应用连接配置
     def __safe_apply_connection_configuration(self):
         apply_start = time() * 1000
         self.__old_tb_client = self.__gateway.tb_client
@@ -232,6 +234,7 @@ class RemoteConfigurator:
             self.__revert_configuration()
             return False
 
+    # 应用存储配置
     def __apply_storage_configuration(self):
         if self.__old_general_configuration_file["storage"] != self.__new_general_configuration_file["storage"]:
             self.__old_event_storage = self.__gateway._event_storage
@@ -243,6 +246,7 @@ class RemoteConfigurator:
                 LOG.exception(e)
                 self.__gateway._event_storage = self.__old_event_storage
 
+    # 还原配置
     def __revert_configuration(self):
         try:
             LOG.info("Remote general configuration will be restored.")
@@ -257,6 +261,7 @@ class RemoteConfigurator:
             LOG.exception("Exception on reverting configuration occurred:")
             LOG.exception(e)
 
+    # 读取当前的日志配置
     def __get_current_logs_configuration(self):
         try:
             with open(self.__gateway.get_config_path() + 'logs.conf', 'r', encoding="UTF-8") as logs:

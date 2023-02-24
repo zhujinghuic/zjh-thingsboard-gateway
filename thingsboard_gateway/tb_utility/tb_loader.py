@@ -49,6 +49,7 @@ class TBModuleLoader:
         TBModuleLoader.PATHS.append(root_path + CONNECTORS_FOLDER)
         TBModuleLoader.PATHS.append(root_path + GRPC_CONNECTORS_FOLDER)
 
+    # 导入模块
     @staticmethod
     def import_module(extension_type, module_name):
         if len(TBModuleLoader.PATHS) == 0:

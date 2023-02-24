@@ -19,7 +19,7 @@ from subprocess import PIPE, Popen, STDOUT, TimeoutExpired
 
 log = getLogger("service")
 
-
+# todo.view1
 class RemoteShell:
     def __init__(self, platform, release):
         self.__session_active = False

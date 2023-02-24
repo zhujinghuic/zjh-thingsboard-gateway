@@ -17,7 +17,7 @@ import logging.handlers
 from sys import stdout
 from time import time
 
-
+# tb 日志处理器
 class TBLoggerHandler(logging.Handler):
     def __init__(self, gateway):
         self.current_log_level = 'INFO'
@@ -75,6 +75,8 @@ class TBLoggerHandler(logging.Handler):
             ]
         for logger_name in logger_names:
             logger = logging.getLogger(logger_name)
+            # 日志输出到流，可以是sys.stderr，sys.stdout或者文件
+            # https://blog.csdn.net/Ximerr/article/details/114677323
             handler = logging.StreamHandler(stdout)
             handler.setFormatter(logging.Formatter('[STREAM ONLY] %(asctime)s - %(levelname)s - [%(filename)s] - %(module)s - %(lineno)d - %(message)s'))
             logger.addHandler(handler)

@@ -42,6 +42,7 @@ class TBUtility:
                 content = message.payload
         return content
 
+    # 校验转换数据
     @staticmethod
     def validate_converted_data(data):
         error = None
@@ -138,8 +139,8 @@ class TBUtility:
 
     @staticmethod
     def install_package(package, version="upgrade"):
-        from sys import executable
-        from subprocess import check_call, CalledProcessError
+        from sys import executable # 导入解析器模块路径
+        from subprocess import check_call, CalledProcessError # 交互式命令执行模块
         result = False
         if version.lower() == "upgrade":
             try:
@@ -176,6 +177,7 @@ class TBUtility:
     def get_dict_key_by_value(dictionary: dict, value):
         return list(dictionary.values())[list(dictionary.values()).index(value)]
 
+    # 生成证书，SHA256
     @staticmethod
     def generate_certificate(old_certificate_path, old_key_path, old_certificate):
         key = ec.generate_private_key(ec.SECP256R1())
@@ -196,6 +198,7 @@ class TBUtility:
         key = key.private_bytes(encoding=serialization.Encoding.PEM,
                                 format=serialization.PrivateFormat.TraditionalOpenSSL,
                                 encryption_algorithm=serialization.NoEncryption())
+        # wb+ 读写方式打开或建立一个二进制文件，允许读和写。
         with open(old_key_path, 'wb+') as f:
             f.write(key)
 
