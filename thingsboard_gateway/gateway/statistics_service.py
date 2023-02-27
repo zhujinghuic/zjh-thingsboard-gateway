@@ -8,6 +8,7 @@ import simplejson
 
 # 统计服务类
 class StatisticsService(Thread):
+    # 类变量
     DATA_STREAMS_STATISTICS = {
         'receivedBytesFromDevices': 0,# 所有接收设备的字节数
         'convertedBytesFromDevice': 0,# 所有转换设备的字节数
@@ -42,6 +43,8 @@ class StatisticsService(Thread):
 
         return []
 
+    # 由于 DATA_STREAMS_STATISTICS 这个变量是 StatisticsService 所属（需要统计里面的字典值），所以这里采用静态方法，而不是实例，用实例
+    # 再调用的话会每次都归零
     @classmethod
     def add_bytes(cls, stat_type, bytes_count):
         cls.DATA_STREAMS_STATISTICS[stat_type] += bytes_count

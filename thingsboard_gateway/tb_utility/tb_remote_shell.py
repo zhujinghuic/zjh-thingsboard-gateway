@@ -19,7 +19,7 @@ from subprocess import PIPE, Popen, STDOUT, TimeoutExpired
 
 log = getLogger("service")
 
-# todo.view1
+# subprocess模块可以生成新的进程，连接到它们的input/output/error管道，同时获取它们的返回码
 class RemoteShell:
     def __init__(self, platform, release):
         self.__session_active = False
@@ -32,6 +32,7 @@ class RemoteShell:
             "terminateCommand": self.terminate_command,
             }
         self.command_in_progress = None
+        # py3中所有字符串默认都是unicode字符串
         # b""表示byte类型的空字符串
         self.__previous_stdout = b""
         self.__previous_stderr = b""

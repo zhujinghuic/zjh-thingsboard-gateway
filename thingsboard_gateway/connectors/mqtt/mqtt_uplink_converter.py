@@ -15,6 +15,7 @@
 from thingsboard_gateway.connectors.converter import Converter, abstractmethod, log
 
 
+# mqtt上行转换器
 class MqttUplinkConverter(Converter):
 
     @abstractmethod

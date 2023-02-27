@@ -3,44 +3,56 @@ from os import curdir, listdir
 from random import choice
 from string import ascii_lowercase
 
-
 from thingsboard_gateway import TBGatewayService
 from thingsboard_gateway.gateway.statistics_service import StatisticsService
 
 import time
 
-
-class Decorator:
-    def __init__(self, func):
-        self.func = func
-
-    def defer_time(self):
-        time.sleep(5)
-        print("延时结束了")
-
-    def __call__(self, *args, **kwargs):
-        self.defer_time()
-        self.func()
+import time
 
 
-@Decorator
-def f1():
-    print("延时之后我才开始执行")
+# python 继承多态
 
+# python 继承多态
 
 class A:
-    def doit(self):
+    def __init__(self):
         print("A")
+        print("A -- end")
 
-class B(A):
-    def doit(self):
+
+class B:
+    def __init__(self):
         print("B")
+        super().__init__()
+        print("B -- end")
 
-class C(B):
+    def doit(self):
+        print("Bb")
+
+
+class C:
+    def __init__(self):
+        print("C")
+        super().__init__()
+        print("C -- end")
+
+    def doit(self):
+        print("Cc")
+
+
+class D(B, C):
+    def __init__(self):
+        print("D")
+        super().__init__()
+        print("D -- end")
+
     def doit(self):
         super().doit()
 
 
-
 if __name__ == '__main__':
-    print(C.doit())
+    d = D()
+    d.doit()
+
+

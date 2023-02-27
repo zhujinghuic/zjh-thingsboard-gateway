@@ -397,6 +397,7 @@ class MqttConnector(Connector, Thread):
                 content = TBUtility.decode(message)
 
                 # Check if message topic exists in mappings "i.e., I'm posting telemetry/attributes" -------------------
+                # fullmatch完全匹配
                 topic_handlers = [regex for regex in self.__mapping_sub_topics if fullmatch(regex, message.topic)]
 
                 if topic_handlers:
@@ -544,6 +545,11 @@ class MqttConnector(Connector, Thread):
                                 if attribute_name_match is not None:
                                     found_attribute_names = attribute_name_match.group(0)
                             elif handler.get("attributeNameJsonExpression"):
+                                """  filter函数 filter(function, iterable)
+                                    function -- 判断函数
+                                    iterable -- 可迭代对象(比如列表)
+                                    是将iterable的每一个元素放到function里判断，false则过滤掉
+                                  """
                                 found_attribute_names = list(filter(lambda x: x is not None,
                                                                     TBUtility.get_values(
                                                                         handler["attributeNameJsonExpression"],
@@ -562,6 +568,7 @@ class MqttConnector(Connector, Thread):
                             self.__gateway.tb_client.client.gw_request_shared_attributes(
                                 found_device_name,
                                 found_attribute_names,
+                                # *args是可变参数
                                 lambda data, *args: self.notify_attribute(
                                     data,
                                     found_attribute_names,
@@ -712,6 +719,8 @@ class MqttConnector(Connector, Thread):
                                                            expression_instead_none=True)
 
                 data_to_send = rpc_config.get('valueExpression')
+                # zip 压缩，解压函数
+                # https://www.runoob.com/python/python-func-zip.html
                 for (tag, value) in zip(data_to_send_tags, data_to_send_values):
                     data_to_send = data_to_send.replace('${' + tag + '}', simplejson.dumps(value))
 

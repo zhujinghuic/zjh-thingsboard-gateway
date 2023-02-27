@@ -22,6 +22,7 @@ from thingsboard_gateway.tb_utility.tb_utility import TBUtility
 from thingsboard_gateway.gateway.statistics_service import StatisticsService
 
 
+# mqtt json上行转换器
 class JsonMqttUplinkConverter(MqttUplinkConverter):
     def __init__(self, config):
         self.__config = config.get('converter')
