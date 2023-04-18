@@ -72,6 +72,7 @@ DEFAULT_CONNECTORS = {
     "ftp": "FTPConnector",
     "socket": "SocketConnector",
     "xmpp": "XMPPConnector",
+    "ps": "PsConnector"
 }
 
 DEFAULT_STATISTIC = {
@@ -148,7 +149,7 @@ class TBGatewayService:
         self.name = ''.join(choice(ascii_lowercase) for _ in range(64))
         self.__rpc_register_queue = SimpleQueue()
         self.__rpc_requests_in_progress = {}
-        # 通过mqtt连接到tbclient
+        # 实例化tbclient
         self.tb_client = TBClient(self.__config["thingsboard"], self._config_dir)
         # 连接前先断连
         try:
