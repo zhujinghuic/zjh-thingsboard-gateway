@@ -1,3 +1,4 @@
+import base64
 import sys
 from os import curdir, listdir
 from random import choice
@@ -52,7 +53,8 @@ class D(B, C):
 
 
 if __name__ == '__main__':
-    d = D()
-    d.doit()
+    a = 'b'
+    print()
+
 
 

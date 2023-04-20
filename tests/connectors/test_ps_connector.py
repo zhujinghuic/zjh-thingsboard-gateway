@@ -1,3 +1,4 @@
+import base64
 import socket
 import selectors
 
@@ -10,7 +11,10 @@ def recv_data(conn):
     data = conn.recv(1024)
 
     if data:
-        print('接收的数据是：%s' % data.decode())
+        # print('接收的数据是：%s' % data.decode())
+        # print('接收的数据是：', str(data)[2:-1].replace('\\x', ' '))
+        print('接收的数据是：', str(data)[2:-1].replace('\\x', ' ').upper())
+        # print(bytes.hex(data).upper())
         conn.send(data)
     else:
         e_poll.unregister(conn)
@@ -24,10 +28,10 @@ def acc_conn(p_server):
 
 
 # CONN_ADDR = ('0.0.0.0', 6232)
-CONN_ADDR = ('0.0.0.0', 6232)
+CONN_ADDR = ('192.168.88.108', 6232)
 server = socket.socket()
 server.bind(CONN_ADDR)
-server.listen(6) # 表示一个客户端最大的连接数
+server.listen(65535) # 表示一个客户端最大的连接数
 
 # 生成一个epllo选择器实例 I/O多路复用，监控多个socket连接
 e_poll = selectors.EpollSelector() # window没有epoll使用selectors.DefaultSelector()实现多路复用
