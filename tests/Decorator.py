@@ -13,6 +13,8 @@ import time
 
 # 装饰器
 # https://blog.csdn.net/m0_67575344/article/details/124256673
+age = 12
+
 class Timer:
     def __init__(self, func) -> None:
         self.func = func
@@ -24,7 +26,10 @@ class Timer:
             ret = self.func(*args, **kwargs)
             print(f'Time:{time.time() - start}')
             return ret
-        return inner()
+        if age > 12:
+            return inner()
+        else:
+            print("xxx")
 
 
 @Timer
