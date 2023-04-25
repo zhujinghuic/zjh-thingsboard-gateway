@@ -1132,6 +1132,9 @@ class TBGatewayService:
         summary_messages = {"eventsProduced": 0, "eventsSent": 0}
         telemetry = {}
         for connector in self.available_connectors:
+            # todo.delete
+            if connector == 'ps Connector':
+                continue
             connector_camel_case = connector.lower().replace(' ', '')
             telemetry[(connector_camel_case + ' EventsProduced').replace(' ', '')] = \
                 self.available_connectors[connector].statistics['MessagesReceived']

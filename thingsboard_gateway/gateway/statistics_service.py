@@ -69,7 +69,8 @@ class StatisticsService(Thread):
                                              encoding='utf-8', timeout=attribute['timeout'])
 
                     if process.returncode != 0:
-                        self._log.error("Statistic parameter raise the exception: %s", process.stderr)
+                        # todo.delete
+                        # self._log.error("Statistic parameter raise the exception: %s", process.stderr)
                         continue
 
                     value = process.stdout

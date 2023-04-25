@@ -26,20 +26,12 @@ GRPC_CONNECTORS_FOLDER = '/grpc_connectors'.replace('/', path.sep)
 DEB_INSTALLATION_EXTENSION_PATH = '/var/lib/thingsboard_gateway/extensions'.replace('/', path.sep)
 
 
-# TB模块加载器
 class TBModuleLoader:
     PATHS = []
     LOADED_CONNECTORS = {}
 
-    # 初始化扩展、连接器，grpc连接器路径
     @staticmethod
     def find_paths():
-        # 该文件的路径
-        # print(__file__)
-
-        # 该文件或文件夹所在的目录路径
-        # print(path.dirname(__file__))
-
         root_path = path.abspath(path.dirname(path.dirname(__file__)))
         log.debug("Root path is: " + root_path)
         if path.exists(DEB_INSTALLATION_EXTENSION_PATH):
@@ -49,7 +41,6 @@ class TBModuleLoader:
         TBModuleLoader.PATHS.append(root_path + CONNECTORS_FOLDER)
         TBModuleLoader.PATHS.append(root_path + GRPC_CONNECTORS_FOLDER)
 
-    # 导入模块
     @staticmethod
     def import_module(extension_type, module_name):
         if len(TBModuleLoader.PATHS) == 0:
@@ -64,18 +55,14 @@ class TBModuleLoader:
                     for file in listdir(current_extension_path):
                         if not file.startswith('__') and file.endswith('.py'):
                             try:
-                                # spec_from_file_location('模块', '文件') 获取模块信息
                                 module_spec = spec_from_file_location(module_name, current_extension_path + path.sep + file)
                                 log.debug(module_spec)
 
                                 if module_spec is None:
                                     continue
 
-                                # 载入模块
                                 module = module_from_spec(module_spec)
-                                # 加载模块
                                 module_spec.loader.exec_module(module)
-                                # 返回模块中的类对象 isClass 只过滤类
                                 for extension_class in getmembers(module, isclass):
                                     if module_name in extension_class:
                                         log.info("Import %s from %s.", module_name, current_extension_path)

@@ -1,4 +1,4 @@
-from socket import socket
+import socket
 from threading import Thread
 
 import selectors
@@ -9,7 +9,9 @@ from thingsboard_gateway.connectors.connector import Connector
 CONN_ADDR = ('192.168.88.108', 6232)
 MAX_CONN = 65535
 
+"""  客户端未断开时关闭服务端如何同时释放客户端连接
 
+  """
 # todo.conutie
 class PsConnector(Connector, Thread):
     def __init__(self, gateway, config, connector_type):
@@ -33,7 +35,8 @@ class PsConnector(Connector, Thread):
             self.server.listen(65535)  # 表示一个客户端最大的连接数
             self.start() # 开启线程处理接收事件
         except Exception as e:
-            log.error(f'启动ps服务端失败, 失败原因', e)
+            log.exception(e)
+            # log.error(f'启动ps服务端失败, 失败原因', e.)
             self.close()
 
     def close(self):
@@ -41,7 +44,7 @@ class PsConnector(Connector, Thread):
         try:
             self.server.close()
         except Exception as e:
-            log.error(f'ps关闭服务失败, 失败原因', e)
+            log.exception(e)
             log.info('ps服务已关闭')
 
     def run(self):
@@ -62,22 +65,34 @@ class PsConnector(Connector, Thread):
                 # print(key.data)
                 call_back(key.fileobj)
 
-    def acc_conn(self):
-        conn, addr = self.server.accept()
+    def acc_conn(self, server):
+        conn, addr = server.accept()
         print('连接地址-', addr)
         # 也有注册一个epoll
         self.e_poll.register(conn, selectors.EVENT_READ, self.recv_data)
 
-    def recv_data(self):
-        data = self.server.recv(1024)
+    def recv_data(self, server):
+        data = server.recv(1024)
 
         if data:
             # print('接收的数据是：%s' % data.decode())
             # print('接收的数据是：', str(data)[2:-1].replace('\\x', ' '))
             print('接收的数据是：', str(data)[2:-1].replace('\\x', ' ').upper())
             # print(bytes.hex(data).upper())
-            self.server.send(data)
+            server.send(data)
         else:
-            self.e_poll.unregister(self)
-            self.close()
+            self.e_poll.unregister(server)
+            server.close()
+
+    def get_name(self):
+        return "ps Connector"
+
+    def is_connected(self):
+        pass
+
+    def on_attributes_update(self, content):
+        pass
+
+    def server_side_rpc_handler(self, content):
+        pass
 
