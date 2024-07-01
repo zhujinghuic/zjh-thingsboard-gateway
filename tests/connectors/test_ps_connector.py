@@ -6,6 +6,8 @@ import selectors
 # 1. socket
 # 2.事件可读
 # 3.回调函数 把一个函数当成变量传到函数里
+import re
+
 
 def recv_data(conn):
     data = conn.recv(1024)
@@ -13,8 +15,11 @@ def recv_data(conn):
     if data:
         # print('接收的数据是：%s' % data.decode())
         # print('接收的数据是：', str(data)[2:-1].replace('\\x', ' '))
-        print('接收的数据是：', str(data)[2:-1].replace('\\x', ' ').upper())
-        # print(bytes.hex(data).upper())
+        # print('接收的数据是：', str(data)[2:-1].replace('\\x', ' ').upper())
+        hex_str = bytes.hex(data).upper()
+        text_list = re.findall(".{2}", hex_str)
+        new_hexStr = " ".join(text_list)
+        print(new_hexStr)
         conn.send(data)
     else:
         e_poll.unregister(conn)

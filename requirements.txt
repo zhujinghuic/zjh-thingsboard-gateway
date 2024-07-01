@@ -1,0 +1,14 @@
+pip~=22.2.2
+cryptography~=38.0.1
+setuptools~=65.4.0
+zipp~=3.15.0
+simplejson~=3.17.6
+PyYAML~=6.0
+PyInquirer~=1.0.3
+pyfiglet~=0.8.post1
+termcolor~=2.0.1
+paho-mqtt~=1.6.1
+regex~=2022.9.13
+requests~=2.28.1
+cachetools~=5.2.0
+redis~=4.5.5

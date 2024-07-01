@@ -16,7 +16,6 @@ import logging
 import logging.config
 import logging.handlers
 import subprocess
-from copy import deepcopy
 from os import execv, listdir, path, pathsep, stat, system
 from queue import SimpleQueue
 from random import choice
@@ -32,6 +31,7 @@ from yaml import safe_load
 from thingsboard_gateway.gateway.constant_enums import DeviceActions, Status
 from thingsboard_gateway.gateway.constants import CONNECTED_DEVICES_FILENAME, CONNECTOR_PARAMETER, \
     PERSISTENT_GRPC_CONNECTORS_KEY_FILENAME
+from thingsboard_gateway.gateway.redis_client import RedisClient
 from thingsboard_gateway.gateway.statistics_service import StatisticsService
 from thingsboard_gateway.gateway.tb_client import TBClient
 from thingsboard_gateway.storage.file.file_event_storage import FileEventStorage
@@ -259,7 +259,6 @@ class TBGatewayService:
         # 最小包发送延迟时间
         self.__min_pack_send_delay_ms = self.__config['thingsboard'].get('minPackSendDelayMS', 500) / 1000.0
         log.info("Gateway started.")
-
         # 以下死循环执行，时刻检查设备变动到tb，发布topic，调度rpc请求，检查共享属性，统计连接器信息到tb，检查连接器配置信息变动，检查版本
         try:
             gateway_statistic_send = 0
